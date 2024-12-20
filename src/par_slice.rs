@@ -159,8 +159,8 @@ mod unit_tests {
     #[test]
     fn multiply_by_test() {
         let mut a = vec![1, 2, 3, 4, 5];
-        let mut b = vec![6, 7, 8, 9, 10];
-        multiply_by(&mut a, &mut b, 1);
+        let b = vec![6, 7, 8, 9, 10];
+        multiply_by(&mut a, &b, 1);
         for (i, x) in a.iter().enumerate() {
             assert_eq!(*x, (i + 1) * (i + 6));
         }

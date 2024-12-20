@@ -69,6 +69,34 @@ impl<'a, const GRID_DIMENSION: usize> Domain<'a, GRID_DIMENSION> {
             },
         );
     }
+
+    pub fn par_set_subset(
+        &mut self,
+        other: &Domain<GRID_DIMENSION>,
+        chunk_size: usize,
+    ) {
+        let const_self_ref: &Domain<GRID_DIMENSION> = self;
+        other.buffer[0..other.aabb.buffer_size()]
+            .par_chunks(chunk_size)
+            .enumerate()
+            .for_each(move |(i, buffer_chunk): (usize, &[f64])| {
+                let self_ptr = const_self_ref as *const Domain<GRID_DIMENSION>;
+                let mut_self_ref: &mut Domain<GRID_DIMENSION> = unsafe {
+                    &mut *(self_ptr as *mut Domain<GRID_DIMENSION>)
+                        as &mut Domain<GRID_DIMENSION>
+                };
+                let offset = i * chunk_size;
+                for i in 0..buffer_chunk.len() {
+                    let other_linear_index = i + offset;
+                    let world_coord =
+                        other.aabb.linear_to_coord(other_linear_index);
+                    let self_linear_index =
+                        mut_self_ref.aabb.coord_to_linear(&world_coord);
+                    mut_self_ref.buffer[self_linear_index] =
+                        other.buffer[other_linear_index];
+                }
+            });
+    }
 }
 
 /// Why not just put this into Domain::par_modify_access?
@@ -119,5 +147,33 @@ impl<'a, const GRID_DIMENSION: usize> DomainChunk<'a, GRID_DIMENSION> {
                 let coord = self.aabb.linear_to_coord(linear_index);
                 (coord, v)
             })
+    }
+}
+
+#[cfg(test)]
+mod unit_tests {
+    use super::*;
+
+    #[test]
+    fn par_set_subset_test() {
+        {
+            let mut buffer = vec![0.0; 100];
+            let bounds = AABB::new(matrix![0, 9; 0, 9;]);
+            let mut domain = Domain::new(bounds, &mut buffer);
+
+            let mut i_buffer = vec![1.0; 25];
+            let i_bounds = AABB::new(matrix![3, 7; 3, 7]);
+            let i_domain = Domain::new(i_bounds, &mut i_buffer);
+
+            domain.par_set_subset(&i_domain, 2);
+
+            for c in domain.aabb.coord_iter() {
+                if i_bounds.contains(&c) {
+                    assert_eq!(domain.view(&c), 1.0);
+                } else {
+                    assert_eq!(domain.view(&c), 0.0);
+                }
+            }
+        }
     }
 }
