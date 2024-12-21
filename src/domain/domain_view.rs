@@ -70,7 +70,8 @@ impl<'a, const GRID_DIMENSION: usize> Domain<'a, GRID_DIMENSION> {
         );
     }
 
-    pub fn par_set_subset(
+    /// Copy other domain into self
+    pub fn par_set_subdomain(
         &mut self,
         other: &Domain<GRID_DIMENSION>,
         chunk_size: usize,
@@ -96,6 +97,15 @@ impl<'a, const GRID_DIMENSION: usize> Domain<'a, GRID_DIMENSION> {
                         other.buffer[other_linear_index];
                 }
             });
+    }
+
+    /// Copy self coords from other into self
+    pub fn par_from_superset(
+        &mut self,
+        other: &Domain<GRID_DIMENSION>,
+        chunk_size: usize,
+    ) {
+        self.par_set_values(|world_coord| other.view(&world_coord), chunk_size);
     }
 }
 
@@ -155,7 +165,7 @@ mod unit_tests {
     use super::*;
 
     #[test]
-    fn par_set_subset_test() {
+    fn par_set_subdomain_test() {
         {
             let mut buffer = vec![0.0; 100];
             let bounds = AABB::new(matrix![0, 9; 0, 9;]);
@@ -165,7 +175,7 @@ mod unit_tests {
             let i_bounds = AABB::new(matrix![3, 7; 3, 7]);
             let i_domain = Domain::new(i_bounds, &mut i_buffer);
 
-            domain.par_set_subset(&i_domain, 2);
+            domain.par_set_subdomain(&i_domain, 2);
 
             for c in domain.aabb.coord_iter() {
                 if i_bounds.contains(&c) {
@@ -173,6 +183,24 @@ mod unit_tests {
                 } else {
                     assert_eq!(domain.view(&c), 0.0);
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn par_from_superset_test() {
+        {
+            let mut buffer = vec![0.0; 100];
+            let bounds = AABB::new(matrix![0, 9; 0, 9;]);
+            let domain = Domain::new(bounds, &mut buffer);
+
+            let mut i_buffer = vec![1.0; 25];
+            let i_bounds = AABB::new(matrix![3, 7; 3, 7]);
+            let mut i_domain = Domain::new(i_bounds, &mut i_buffer);
+
+            i_domain.par_from_superset(&domain, 3);
+            for c in i_domain.aabb.coord_iter() {
+                assert_eq!(domain.view(&c), 0.0);
             }
         }
     }
