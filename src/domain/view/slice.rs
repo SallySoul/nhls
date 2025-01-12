@@ -30,7 +30,11 @@ impl<'a, const GRID_DIMENSION: usize> DomainView<GRID_DIMENSION>
         self.buffer
     }
 
-    fn buffer_mut(&mut self) -> (&AABB<GRID_DIMENSION>, &mut [f64]) {
+    fn buffer_mut(&mut self) -> &mut [f64] {
+        self.buffer
+    }
+
+    fn aabb_buffer_mut(&mut self) -> (&AABB<GRID_DIMENSION>, &mut [f64]) {
         (&self.aabb, self.buffer)
     }
 

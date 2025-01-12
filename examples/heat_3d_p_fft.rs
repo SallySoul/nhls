@@ -1,4 +1,5 @@
 use nhls::domain::*;
+use nhls::fft_solver::PeriodicSolver;
 use nhls::image_3d_example::*;
 use nhls::init;
 use nhls::vtk::*;
@@ -24,19 +25,16 @@ fn main() {
     }
 
     // Apply periodic solver
-    let mut periodic_library =
-        nhls::solver::periodic_plan::PeriodicPlanLibrary::new(
-            &grid_bound,
-            &stencil,
-            args.plan_type,
-        );
+    let mut periodic_solver = PeriodicSolver::create(
+        &stencil,
+        output_domain.buffer_mut(),
+        &grid_bound,
+        args.steps_per_image,
+        args.plan_type,
+        args.chunk_size,
+    );
     for t in 1..args.images {
-        periodic_library.apply(
-            &mut input_domain,
-            &mut output_domain,
-            args.steps_per_image,
-            args.chunk_size,
-        );
+        periodic_solver.apply(&mut input_domain, &mut output_domain);
         std::mem::swap(&mut input_domain, &mut output_domain);
         if args.write_images {
             write_vtk3d(&input_domain, &args.frame_name(t));

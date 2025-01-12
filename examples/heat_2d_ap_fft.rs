@@ -1,11 +1,13 @@
+/*
 use nhls::domain::*;
-use nhls::fft_solver::PeriodicSolver;
 use nhls::image::*;
 use nhls::image_2d_example::*;
-use nhls::init;
+use nhls::solver::*;
+*/
 
 fn main() {
-    let args = Args::cli_parse("heat_2d_p_fft");
+    /*
+    let args = Args::cli_parse("heat_2d_ap_fft");
 
     let stencil = nhls::standard_stencils::heat_2d(1.0, 1.0, 1.0, 0.2, 0.2);
 
@@ -13,26 +15,31 @@ fn main() {
     let grid_bound = args.grid_bounds();
     let mut input_domain = OwnedDomain::new(grid_bound);
     let mut output_domain = OwnedDomain::new(grid_bound);
-
-    if args.rand_init {
-        init::rand(&mut input_domain, 1024, args.chunk_size);
-    } else {
-        init::normal_ic_2d(&mut input_domain, args.chunk_size);
-    }
     if args.write_images {
         image2d(&input_domain, &args.frame_name(0));
     }
 
-    let mut periodic_solver = PeriodicSolver::create(
+    // Create BC
+    let bc = ConstantCheck::new(1.0, grid_bound);
+
+    // Create AP Solver
+    let cutoff = 40;
+    let ratio = 0.5;
+    let mut solver = APSolver::new(
+        &bc,
         &stencil,
-        output_domain.buffer_mut(),
+        cutoff,
+        ratio,
         &grid_bound,
-        args.steps_per_image,
         args.plan_type,
         args.chunk_size,
     );
     for t in 1..args.images {
-        periodic_solver.apply(&mut input_domain, &mut output_domain);
+        solver.loop_solve(
+            &mut input_domain,
+            &mut output_domain,
+            args.steps_per_image,
+        );
         std::mem::swap(&mut input_domain, &mut output_domain);
         if args.write_images {
             image2d(&input_domain, &args.frame_name(t));
@@ -40,4 +47,5 @@ fn main() {
     }
 
     args.save_wisdom();
+    */
 }

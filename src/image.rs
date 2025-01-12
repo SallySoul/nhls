@@ -34,6 +34,7 @@ pub fn image2d<F: AsRef<std::path::Path>, DomainType: DomainView<2>>(
     domain: &DomainType,
     s: &F,
 ) {
+    println!("Writing png: {:?}", s.as_ref());
     let aabb = domain.aabb();
     let exclusive_bounds = aabb.exclusive_bounds();
     let gradient = colorous::TURBO;

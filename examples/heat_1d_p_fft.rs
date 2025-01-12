@@ -1,4 +1,5 @@
 use nhls::domain::*;
+use nhls::fft_solver::PeriodicSolver;
 use nhls::image_1d_example::*;
 use nhls::init;
 
@@ -18,13 +19,6 @@ fn main() {
         init::normal_ic_1d(&mut input_domain, args.chunk_size);
     }
 
-    let mut periodic_library =
-        nhls::solver::periodic_plan::PeriodicPlanLibrary::new(
-            &grid_bound,
-            &stencil,
-            args.plan_type,
-        );
-
     let mut img = None;
     if args.write_image {
         let mut i = nhls::image::Image1D::new(grid_bound, args.lines as u32);
@@ -32,13 +26,16 @@ fn main() {
         img = Some(i);
     }
 
+    let mut periodic_solver = PeriodicSolver::create(
+        &stencil,
+        output_domain.buffer_mut(),
+        &grid_bound,
+        args.steps_per_line,
+        args.plan_type,
+        args.chunk_size,
+    );
     for t in 1..args.lines as u32 {
-        periodic_library.apply(
-            &mut input_domain,
-            &mut output_domain,
-            args.steps_per_line,
-            args.chunk_size,
-        );
+        periodic_solver.apply(&mut input_domain, &mut output_domain);
         std::mem::swap(&mut input_domain, &mut output_domain);
         if let Some(i) = img.as_mut() {
             i.add_line(t, input_domain.buffer());

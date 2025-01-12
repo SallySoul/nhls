@@ -16,7 +16,9 @@ pub trait DomainView<const GRID_DIMENSION: usize>: Sync {
 
     fn buffer(&self) -> &[f64];
 
-    fn buffer_mut(&mut self) -> (&AABB<GRID_DIMENSION>, &mut [f64]);
+    fn buffer_mut(&mut self) -> &mut [f64];
+
+    fn aabb_buffer_mut(&mut self) -> (&AABB<GRID_DIMENSION>, &mut [f64]);
 
     fn view(&self, world_coord: &Coord<GRID_DIMENSION>) -> f64;
 
@@ -24,7 +26,7 @@ pub trait DomainView<const GRID_DIMENSION: usize>: Sync {
         &'a mut self,
         chunk_size: usize,
     ) -> impl ParallelIterator<Item = DomainChunk<'a, GRID_DIMENSION>> {
-        let (aabb, buffer) = self.buffer_mut();
+        let (aabb, buffer) = self.aabb_buffer_mut();
         par_modify_access_impl(buffer, aabb, chunk_size)
     }
 
@@ -65,7 +67,7 @@ pub trait DomainView<const GRID_DIMENSION: usize>: Sync {
                         other.aabb().linear_to_coord(other_linear_index);
                     let self_linear_index =
                         mut_self_ref.aabb().coord_to_linear(&world_coord);
-                    mut_self_ref.buffer_mut().1[self_linear_index] =
+                    mut_self_ref.buffer_mut()[self_linear_index] =
                         other.buffer()[other_linear_index];
                 }
             });

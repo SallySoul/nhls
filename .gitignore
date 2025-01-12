@@ -10,3 +10,5 @@
 *.sh
 *-e
 *.txt
+*.dot
+*.svg

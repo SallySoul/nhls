@@ -33,7 +33,6 @@ pub fn direct_periodic_apply<
 mod unit_tests {
     use super::*;
     use crate::util::*;
-    use fftw::array::AlignedVec;
     use float_cmp::assert_approx_eq;
     use nalgebra::matrix;
 
@@ -141,10 +140,7 @@ mod unit_tests {
         let chunk_size = 1;
         let stencil = Stencil::new([[-1]], |args: &[f64; 1]| args[0]);
         let bound = AABB::new(matrix![0, 9]);
-        let mut input_buffer = AlignedVec::new(10);
-        for i in 0..10 {
-            input_buffer[i] = i as f64;
-        }
+
         let mut input_domain = OwnedDomain::new(bound);
         let mut output_domain = OwnedDomain::new(bound);
         input_domain

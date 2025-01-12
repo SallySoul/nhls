@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 bytemuck = "1.19.0"
 colorous = "1.0.14"
-fftw = { git = "https://github.com/SallySoul/fftw3-rs.git", tag = "fftw3-0.0.1" }
+fftw = { git = "https://github.com/SallySoul/fftw3-rs.git", tag = "fftw3-v0.8.3" }
 
 image = "0.25.2"
 nalgebra = "0.33.2"
