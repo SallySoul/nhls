@@ -26,6 +26,7 @@ pub fn coord_to_linear<const GRID_DIMENSION: usize>(
     coord: &Coord<GRID_DIMENSION>,
     exclusive_bounds: &Coord<GRID_DIMENSION>,
 ) -> usize {
+    // TODO this could be better
     let mut accumulator = 0;
     for d in 0..GRID_DIMENSION {
         debug_assert!(coord[d] >= 0);

@@ -1,13 +1,6 @@
 use crate::util::indexing::*;
 use crate::util::*;
 
-/// Raw type used for AABB,
-/// an n by 2 matrix, where
-/// column 0 is the min corner
-/// and column 1 is the max corner
-pub type Bounds<const DIMENSION: usize> =
-    nalgebra::SMatrix<i32, { DIMENSION }, 2>;
-
 /// Axis Aligned Bounding Box (AABB) for coordinate types.
 /// Each instance is inclusive of both corners.
 /// This class is responsible for alot of indexing operations,
@@ -224,6 +217,24 @@ impl<const DIMENSION: usize> AABB<DIMENSION> {
             .bounds
             .set_column(1, &cell_bounds.bounds.column(1).add_scalar(-1));
         cell_bounds
+    }
+
+    pub fn coord_offset_to_linear<const NEIGHBORHOOD_SIZE: usize>(
+        &self,
+        coord_offsets: &[Coord<DIMENSION>; NEIGHBORHOOD_SIZE],
+    ) -> [i32; NEIGHBORHOOD_SIZE] {
+        // highest dimension goes the fastest
+        let exclusive_bounds = self.exclusive_bounds();
+        let mut linear_offsets = [0; NEIGHBORHOOD_SIZE];
+        let mut accumulator = 1;
+        for d in (0..DIMENSION).rev() {
+            for o in 0..NEIGHBORHOOD_SIZE {
+                linear_offsets[o] += coord_offsets[o][d] * accumulator;
+            }
+            accumulator *= exclusive_bounds[d];
+        }
+
+        linear_offsets
     }
 }
 
@@ -490,6 +501,44 @@ mod unit_tests {
                 c,
                 (max_steps, AABB::new(matrix![24, 80; 16, 88; 8, 36]))
             );
+        }
+    }
+
+    #[test]
+    fn offset_conversion_test() {
+        {
+            let aabb = AABB::new(matrix![0, 9]);
+            let coord_offsets = [vector![-1], vector![0], vector![1]];
+            let linear_offsets = aabb.coord_offset_to_linear(&coord_offsets);
+            println!("1D: {:?}", linear_offsets);
+        }
+
+        {
+            let aabb = AABB::new(matrix![0, 9; 0, 9]);
+            let coord_offsets = [
+                vector![0, 0],
+                vector![-1, 0],
+                vector![1, 0],
+                vector![0, -1],
+                vector![0, 1],
+            ];
+            let linear_offsets = aabb.coord_offset_to_linear(&coord_offsets);
+            println!("2D: {:?}", linear_offsets);
+        }
+
+        {
+            let aabb = AABB::new(matrix![0, 9; 0, 9; 0,9]);
+            let coord_offsets = [
+                vector![0, 0, 0],
+                vector![-1, 0, 0],
+                vector![1, 0, 0],
+                vector![0, -1, 0],
+                vector![0, 1, 0],
+                vector![0, 0, -1],
+                vector![0, 0, 1],
+            ];
+            let linear_offsets = aabb.coord_offset_to_linear(&coord_offsets);
+            println!("3D: {:?}", linear_offsets);
         }
     }
 }
